@@ -69,21 +69,12 @@ def test_put_user(client, user, token):
     }
 
 
-def test_update_integrity_error(client, user, token):
-    client.post(
-        '/users',
-        json={
-            'username': 'fausto',
-            'email': 'fausto@example.com',
-            'password': 'secret',
-        },
-    )
-
+def test_update_integrity_error(client, user, other_user, token):
     response_update = client.put(
         f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
-            'username': 'fausto',
+            'username': other_user.username,
             'email': 'fausto@example.com',
             'password': 'secret',
         },
@@ -108,9 +99,9 @@ def test_create_user_exists_username_error(client, user):
     response = client.post(
         '/users/',
         json={
-            'username': 'Teste',
-            'email': 'teste@test.com',
-            'password': 'secret',
+            'username': user.username,
+            'email': user.email,
+            'password': user.password,
         },
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -121,9 +112,9 @@ def test_create_user_exists_email_error(client, user):
     response = client.post(
         '/users/',
         json={
-            'username': 'teste',
-            'email': 'teste@teste.com',
-            'password': 'secret',
+            'username': 'Test',
+            'email': user.email,
+            'password': user.password,
         },
     )
 
@@ -131,22 +122,14 @@ def test_create_user_exists_email_error(client, user):
     assert response.json() == {'detail': 'Email already exists'}
 
 
-def test_put_forbidden_error(client, user, token):
-    client.post(
-        '/users/',
-        json={
-            'username': 'fausto',
-            'email': 'fausto@example.com',
-            'password': 'secret',
-        },
-    )
+def test_update_user_with_wrong_user(client, other_user, token):
     response = client.put(
-        '/users/2',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
-            'username': 'fausto',
-            'email': 'fausto@example.com',
-            'password': 'secret',
+            'username': 'bob',
+            'email': 'bob@example.com',
+            'password': 'mynewpassword',
         },
     )
 
@@ -154,17 +137,9 @@ def test_put_forbidden_error(client, user, token):
     assert response.json() == {'detail': 'Not enough permissions'}
 
 
-def test_delete_forbidden_error(client, user, token):
-    client.post(
-        '/users/',
-        json={
-            'username': 'fausto',
-            'email': 'fausto@example.com',
-            'password': 'secret',
-        },
-    )
+def test_delete_forbidden_error(client, other_user, token):
     response = client.delete(
-        '/users/2',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
